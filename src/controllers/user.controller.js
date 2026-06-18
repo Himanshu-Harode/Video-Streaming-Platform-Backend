@@ -23,8 +23,8 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(409, "User with email or username already exists!");
   }
 
-  const avtarLocalPath = req.files?.avtar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  const avtarLocalPath = req.files?.avtar?.[0]?.path;
+  const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
 
   if (!avtarLocalPath) {
     throw new ApiError(400, "Avtar file is required!");
@@ -32,12 +32,11 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const avtar = await uploadOnCloudinary(avtarLocalPath);
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
-
   if (!avtar) {
     throw new ApiError(400, "Avtar file is required!");
   }
 
-  const user = User.create({
+  const user = await User.create({
     username: username.toLowerCase(),
     fullname,
     password,
@@ -54,10 +53,9 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Something went wrong while registering the user!");
   }
 
-  return res.status(201).json(
-   new ApiResponse(200, createdUser,"User registered successfully!")
- )
-  
+  return res
+    .status(201)
+    .json(new ApiResponse(200, createdUser, "User registered successfully!"));
 });
 
 export { registerUser };

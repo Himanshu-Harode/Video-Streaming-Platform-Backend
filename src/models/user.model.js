@@ -1,4 +1,3 @@
-
 import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
@@ -50,11 +49,10 @@ const userSchema = new Schema(
   { timestamps: true },
 );
 
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next(); // check that if password is not       changed then direct return
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return; // check that if password is not changed then direct return
 
   this.password = await bcrypt.hash(this.password, 10); //if there is any change in password then hash it
-  next();
 });
 
 userSchema.methods.isPasswordCorrect = async function (password) {
