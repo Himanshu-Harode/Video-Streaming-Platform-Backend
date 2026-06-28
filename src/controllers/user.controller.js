@@ -7,8 +7,8 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
     const user = await User.findById(userId);
-    const accessToken = user.generateAccessToken;
-    const refreshToken = user.generateRefreshToken;
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
 
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
@@ -49,13 +49,18 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   const avtar = await uploadOnCloudinary(avtarLocalPath);
-  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+
+  let coverImage = null;
+
+  if (coverImageLocalPath) {
+    coverImage = await uploadOnCloudinary(coverImageLocalPath);
+  }
   if (!avtar) {
     throw new ApiError(400, "Avtar file is required!");
   }
 
   const user = await User.create({
-    username: username.toLowerCase(),
+    username: username?.toLowerCase(),
     fullname,
     password,
     email,
@@ -73,7 +78,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   return res
     .status(201)
-    .json(new ApiResponse(200, createdUser, "User registered successfully!"));
+    .json(new ApiResponse(201, createdUser, "User registered successfully!"));
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -85,7 +90,7 @@ const loginUser = asyncHandler(async (req, res) => {
   // send cookie
 
   const { email, password, username } = req.body;
-  if (!username || !email) {
+  if (!(username || email)) {
     throw new ApiError(400, "username or email is required!");
   }
 
@@ -106,7 +111,7 @@ const loginUser = asyncHandler(async (req, res) => {
     user._id,
   );
 
-  const loggedInUser = await User.findById(_id).select(
+  const loggedInUser = await User.findById(user._id).select(
     "-password -refreshToken",
   );
 
@@ -133,7 +138,7 @@ const logoutUser = asyncHandler(async (req, res, next) => {
     req.user._id,
     {
       $set: {
-        refreshToken: undefined,
+        refreshToken: null,
       },
     },
     { new: true },
